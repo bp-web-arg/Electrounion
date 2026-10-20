@@ -103,12 +103,7 @@
 (function(){
   "use strict";
 
-  /* ============================================================
-     PEGÁ ACÁ LA URL DE TU APLICACIÓN WEB (termina en /exec).
-     También podés dejarla vacía si siempre abrís el portal
-     desde el link que genera el panel.
-     ============================================================ */
-  const API_URL = "https://script.google.com/macros/s/AKfycbzhqqfFddMXebeAr9QnK_31a3b7deOSr0j40o7l7QD4ol33-uWKncmpVbf68MM5ZRt0qQ/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbzqIvYdXHZKmzX29wVWVEqYgDnx7enM93XWhRI6c6Bl83cx0FgNLJLiRavEoLn_p3QTbA/exec";
 
   const CLAVE_API = "andreani_portal_api";
   const $ = id => document.getElementById(id);
@@ -208,7 +203,7 @@
     const c = claseEstado(estado);
     const base = [
       {t:"Pedido registrado", s:"Recibimos los datos del envío."},
-      {t:"En camino", s:"Tu pedido está en tránsito hacia el domicilio."},
+      {t:"En camino", s:"Tu pedido está in tránsito hacia el domicilio."},
       {t:"Entregado", s:"El pedido fue entregado."}
     ];
     return base.map((p, i) => {
