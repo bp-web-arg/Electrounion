@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Andreani · Registro de Clientes y Envíos</title>
+<style>
+  :root{--rojo:#d71920;--rojo-osc:#b6040b;--rojo-claro:#fbe8e9;--gris:#4e555e;--gris-claro:#f4f5f7;--borde:#e2e4e8;--ok:#0c7a4f;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--gris-claro);color:#272a2f;}
+  header{background:#fff;border-bottom:4px solid var(--rojo);box-shadow:0 1px 6px rgba(0,0,0,.08);}
+  .header-inner{max-width:1100px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .logo{height:42px;width:auto;display:block;}
+  .header-txt{flex:1;min-width:180px;}
+  .header-txt h1{margin:0;font-size:18px;font-weight:700;}
+  .header-txt p{margin:2px 0 0;font-size:12.5px;color:var(--gris);}
+  .badge-user{font-size:12px;background:var(--rojo-claro);color:var(--rojo-osc);padding:6px 12px;border-radius:20px;font-weight:600;white-space:nowrap;}
+  .badge-conn{font-size:12px;padding:6px 12px;border-radius:20px;font-weight:700;white-space:nowrap;background:#f1f2f4;color:var(--gris);}
+  .badge-conn.on{background:#ddf3ea;color:#0c3224;}
+  .badge-conn.off{background:#fff4e5;color:#8a5a10;}
+  main{max-width:1100px;margin:0 auto;padding:22px 20px 60px;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px;}
+  .card{background:#fff;border:1px solid var(--borde);border-radius:10px;padding:16px 18px;}
+  .card .num{font-size:26px;font-weight:800;color:var(--rojo);line-height:1;}
+  .card .lbl{font-size:12px;color:var(--gris);margin-top:6px;text-transform:uppercase;letter-spacing:.4px;}
+  .panel{background:#fff;border:1px solid var(--borde);border-radius:10px;padding:20px;margin-bottom:22px;}
+  .panel h2{margin:0 0 16px;font-size:16px;color:var(--rojo-osc);border-left:4px solid var(--rojo);padding-left:10px;}
+  .grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--gris);margin-bottom:5px;}
+  input,select{width:100%;padding:10px 12px;border:1px solid var(--borde);border-radius:8px;font-size:14px;background:#fff;color:#272a2f;}
+  input:focus,select:focus{outline:none;border-color:var(--rojo);box-shadow:0 0 0 3px rgba(215,25,32,.12);}
+  .btn{border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;}
+  .btn-primario{background:var(--rojo);color:#fff;}
+  .btn-primario:hover{background:var(--rojo-osc);}
+  .btn-sec{background:var(--gris-claro);color:var(--gris);border:1px solid var(--borde);}
+  .btn-sec:hover{background:#e9ebee;}
+  .btn-cancel{background:#fff;color:var(--rojo);border:1px solid var(--rojo);}
+  .form-actions{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;}
+  .toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+  .toolbar input[type=search]{flex:1;min-width:200px;}
+  .tabla-wrap{overflow-x:auto;border:1px solid var(--borde);border-radius:10px;background:#fff;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:860px;}
+  thead th{background:var(--rojo);color:#fff;text-align:left;padding:12px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+  tbody td{padding:12px 14px;border-bottom:1px solid var(--borde);vertical-align:top;}
+  tbody tr:nth-child(even){background:#fafbfc;}
+  tbody tr:hover{background:var(--rojo-claro);}
+  .acciones{display:flex;gap:6px;white-space:nowrap;}
+  .mini{border:1px solid var(--borde);background:#fff;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer;font-weight:600;color:var(--gris);}
+  .mini:hover{background:var(--gris-claro);}
+  .mini.editar{color:#2f6fd0;border-color:#cfe0f7;}
+  .mini.borrar{color:var(--rojo);border-color:#f3babc;}
+  .mini.link{color:#0c7a4f;border-color:#bfe6d3;}
+  .estado{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+  .estado.entregado{background:#ddf3ea;color:#0c3224;}
+  .estado.pendiente{background:#fff9ed;color:#684d18;}
+  .estado.transito{background:#edeffb;color:#1f2856;}
+  .vacio{text-align:center;padding:40px 20px;color:var(--gris);font-size:14px;}
+  .vacio .ico{font-size:34px;display:block;margin-bottom:10px;}
+  .cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;align-items:end;}
+  .cfg small{display:block;font-size:11.5px;color:#818891;margin-top:5px;}
+  .modal-fondo{position:fixed;inset:0;background:rgba(20,22,26,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;}
+  .modal{background:#fff;border-radius:12px;padding:22px;max-width:430px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3);}
+  .modal h3{margin:0 0 4px;font-size:16px;color:var(--rojo-osc);}
+  .modal p.sub{margin:0 0 14px;font-size:12.5px;color:var(--gris);}
+  .modal canvas{border:1px solid var(--borde);border-radius:8px;background:#fff;max-width:100%;}
+  .modal .link-box{font-size:11.5px;word-break:break-all;background:var(--gris-claro);border:1px solid var(--borde);border-radius:8px;padding:10px;margin:14px 0;text-align:left;color:var(--gris);max-height:80px;overflow:auto;font-family:ui-monospace,Menlo,Consolas,monospace;}
+  .modal-acciones{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  footer{text-align:center;padding:24px 20px;font-size:12px;color:#818891;border-top:1px solid var(--borde);background:#fff;}
+  footer strong{color:var(--rojo);}
+  @media (max-width:600px){.logo{height:34px;}.header-txt h1{font-size:16px;}main{padding:16px 14px 50px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <img class="logo" alt="Andreani"
+      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' id='Capa_1' data-name='Capa 1' width='250.1771mm' height='84.8915mm' viewBox='0 0 709.1633 240.6375'%3E%3Cdefs%3E%3Cstyle%3E.cls-1%7Bfill:%23d0080f;%7D%3C/style%3E%3C/defs%3E%3Cpath class='cls-1' d='M286.7178,148.36l-1.9082-8.3767H266.6949l-4.5583,8.3767H250.0842l25.06-45.2013h13.76L300.0067,148.36Zm-5.7929-25.6509a36.881,36.881,0,0,1-1.1964-7.5061h-.1568a63.0484,63.0484,0,0,1-3.7883,8.043l-4.8076,8.4933h12.1388Z'/%3E%3Cpath class='cls-1' d='M335.63,148.36l-9.2071-19.48a82.9384,82.9384,0,0,1-3.8405-9.927c-.3037,3.354-.8747,7.9123-1.5744,12.1932L318.213,148.36H306.5487l7.3291-45.2013h15.549l8.616,17.89c1.7232,3.6716,3.2675,7.6288,4.5684,11.1013.2353-3.8807,1.05-9.8425,1.7513-14.1274l2.4049-14.8634h11.67L351.1086,148.36Z'/%3E%3Cpath class='cls-1' d='M437.9469,148.3593l-9.5791-17.6844h-.4725l-2.8533,17.6844H412.9073L420.24,103.158c4.4759-.2614,10.1582-.3318,16.46-.3318,12.36,0,19.2065,3.8144,17.6643,13.3875-1.0013,6.0926-6.3921,11.055-13.6207,12.5229,1.1139,1.7493,2.1535,3.4142,3.2232,5.0851l8.7568,14.5376Zm-3.571-36.9633c-1.2406,0-2.6461.07-3.362.1347l-1.878,11.5838c.6072.06,1.8438.1328,3.0121.1328,5.1253,0,8.7708-2.3445,9.3921-6.1589.5711-3.553-1.49-5.6924-7.1642-5.6924'/%3E%3Cpolygon class='cls-1' points='458.977 148.36 466.308 103.159 495.864 103.159 494.442 111.923 477.023 111.923 475.566 120.901 492.052 120.901 490.672 129.411 474.182 129.411 472.572 139.384 489.981 139.384 488.535 148.36 458.977 148.36'/%3E%3Cpath class='cls-1' d='M531.4747,148.36l-1.9122-8.3767H511.4458l-4.5483,8.3767H494.8512l25.0558-45.2013h13.7735L544.78,148.36Zm-5.7989-25.6509a39.25,39.25,0,0,1-1.1924-7.5061h-.1569a62.7354,62.7354,0,0,1-3.7862,8.043l-4.7956,8.4933h12.1268Z'/%3E%3Cpath class='cls-1' d='M578.7776,148.36l-9.2071-19.48a83.4276,83.4276,0,0,1-3.8285-9.927c-.3116,3.354-.8968,7.9123-1.59,12.1932L561.3566,148.36h-11.66l7.3251-45.2013h15.561l8.606,17.89c1.7413,3.6716,3.2654,7.6288,4.5784,11.1013.2393-3.8807,1.0456-9.8425,1.7433-14.1274l2.4169-14.8634h11.6623L594.2522,148.36Z'/%3E%3Cpolygon class='cls-1' points='606.385 148.36 613.728 103.159 625.855 103.159 618.52 148.36 606.385 148.36'/%3E%3Cpath class='cls-1' d='M222.5872,84.6876c-2.7064-7.1723-8.5778-12.9672-16.9746-16.7635-7.9022-3.5791-17.8614-5.2983-28.7877-4.9886a112.434,112.434,0,0,0-65.6,24.7722c-8.4009,6.9934-14.7407,14.8614-18.3037,22.7656-3.8043,8.3988-4.3714,16.6288-1.6569,23.8031,3.9994,10.6126,14.6482,17.9558,29.97,20.6663,15.1469,2.6944,33.1148.5308,50.574-6.0543a108.9828,108.9828,0,0,0,30.8266-17.64c8.4049-6.9813,14.7286-14.8674,18.2937-22.7656a34.9929,34.9929,0,0,0,3.34-14.4049,26.4154,26.4154,0,0,0-1.681-9.39M139.13,146.9962c-2.1938-.6836-2.7125-2.262-.8084-5.5053l9.7642-16.4881h26.8091l2.3385,10.4116a5.06,5.06,0,0,1-1.7976,4.9022c-.6253.2513-1.2427.4907-1.862.7319a88.0339,88.0339,0,0,1-34.4438,5.9477M151.98,118.9284l15.3439-25.3373,6.1066,25.3373Zm44.7067,9.4685a2.3855,2.3855,0,0,1-3.5792-1.4155l-11.435-44.0351s-1.5945-7.7091-8.3466-7.7091h-1.84L161.8892,91.54l-30.76,49.11c-2.0308,3.2111-4.1984,4.1441-6.41,3.9511-9.4424-2.9438-16.482-8.4511-19.4116-16.2106-7.0235-18.5852,12.1569-43.04,42.8326-54.6357,30.6758-11.608,61.247-5.9437,68.2545,12.6456,5.0208,13.2789-3.3318,29.5638-19.7072,41.9961'/%3E%3Cpath class='cls-1' d='M386.4066,103.164c-5.4994-.0362-11.4391.1307-14.6281.2232l-1.5362.0322-7.5825,45.26,4.6931.1749c3.2735.1307,6.6817.2916,11.0811.3178,9.8848.0683,17.97-2.9981,23.3849-8.8593,4.8177-5.1878,7.2608-12.3641,6.8847-20.1677-.5187-10.8459-8.433-16.8842-22.297-16.9807M379.3007,139.5c-.754,0-1.7373-.0583-2.6039-.1367.38-2.3928,4.0154-24.8286,4.2949-26.582,1.2607-.0562,2.8291-.09,4.679-.0784,9.0523.07,10.4618,4.1723,10.6528,8.18.3057,6.4866-2.8492,18.7139-17.0228,18.6174'/%3E%3C/svg%3E">
+    <div class="header-txt">
+      <h1>Registro de Clientes y Envíos</h1>
+      <p>Panel de gestión interno</p>
+    </div>
+    <span class="badge-conn" id="connBadge">Sin configurar</span>
+    <span class="badge-user">Sucursal Buenos Aires</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="cards">
+    <div class="card"><div class="num" id="statTotal">0</div><div class="lbl">Clientes</div></div>
+    <div class="card"><div class="num" id="statPend">0</div><div class="lbl">Pendientes</div></div>
+    <div class="card"><div class="num" id="statTransito">0</div><div class="lbl">En tránsito</div></div>
+    <div class="card"><div class="num" id="statEntreg">0</div><div class="lbl">Entregados</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>Conexión con Google Sheets</h2>
+    <div class="cfg">
+      <div>
+        <label for="apiUrl">URL de la aplicación web (termina en /exec)</label>
+        <input type="text" id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
+        <small>Pegá acá la URL que te dio Google al implementar el script. Con esto el panel guarda en la planilla y el portal se actualiza en vivo.</small>
+      </div>
+      <div>
+        <label for="urlPortal">URL pública de seguimiento.html</label>
+        <input type="text" id="urlPortal" placeholder="https://tusitio.com/seguimiento.html">
+        <small>Dirección donde vas a subir el portal del cliente. Se usa para armar los links y QR.</small>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button type="button" class="btn btn-sec" id="btnSync">Sincronizar ahora</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 id="formTitulo">Agregar cliente</h2>
+    <form id="formEnvio" autocomplete="off">
+      <input type="hidden" id="editId">
+      <div class="grid-form">
+        <div><label for="cliente">Cliente</label><input type="text" id="cliente" placeholder="Nombre y apellido" required></div>
+        <div><label for="telefono">Teléfono</label><input type="tel" id="telefono" placeholder="11 5555-5555"></div>
+        <div><label for="producto">Producto comprado</label><input type="text" id="producto" placeholder="Ej: Zapatillas Nike" required></div>
+        <div><label for="fecha">Fecha de entrega</label><input type="date" id="fecha" required></div>
+        <div><label for="direccion">Dirección</label><input type="text" id="direccion" placeholder="Calle 123, piso/depto" required></div>
+        <div><label for="localidad">Localidad</label><input type="text" id="localidad" placeholder="Ciudad / Barrio"></div>
+        <div><label for="seguimiento">N.º de seguimiento</label><input type="text" id="seguimiento" placeholder="Ej: 360000000000000"></div>
+        <div><label for="estado">Estado</label>
+          <select id="estado">
+            <option value="Pendiente">Pendiente</option>
+            <option value="En tránsito">En tránsito</option>
+            <option value="Entregado">Entregado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primario" id="btnGuardar">Guardar cliente</button>
+        <button type="button" class="btn btn-cancel" id="btnCancelar" style="display:none;">Cancelar edición</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="toolbar">
+      <input type="search" id="buscador" placeholder="Buscar por cliente, producto, dirección o seguimiento...">
+      <button class="btn btn-sec" id="btnExport">Exportar CSV</button>
+      <button class="btn btn-sec" id="btnExportJson">Exportar JSON</button>
+      <button class="btn btn-sec" id="btnImportar">Importar archivo</button>
+      <input type="file" id="fileImport" accept=".csv,.json,.txt" style="display:none;">
+      <button class="btn btn-sec" id="btnLimpiar">Borrar todo</button>
+    </div>
+    <div class="tabla-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th><th>Teléfono</th><th>Producto</th><th>Fecha entrega</th>
+            <th>Dirección</th><th>Seguimiento</th><th>Estado</th><th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="vacio" id="vacio" style="display:none;">
+        <span class="ico">📦</span>
+        Todavía no cargaste clientes. Usá el formulario de arriba.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <strong>ANDREANI</strong> · Panel de registro interno
+</footer>
+
+<div id="modal" class="modal-fondo" style="display:none;">
+  <div class="modal">
+    <h3>Link y QR para el cliente</h3>
+    <p class="sub" id="modalSub">—</p>
+    <canvas id="qrCanvas"></canvas>
+    <div class="link-box" id="modalLink"></div>
+    <div class="modal-acciones">
+      <button class="btn btn-primario" id="btnCopiar">Copiar link</button>
+      <button class="btn btn-sec" id="btnWsp">Enviar por WhatsApp</button>
+      <button class="btn btn-sec" id="btnCerrar">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== GENERADOR DE QR (modo byte, nivel L, versiones 1-15) ===== */
+const QR = (function(){
+  "use strict";
+  const EXP = new Uint8Array(512), LOG = new Uint8Array(256);
+  (function(){
+    let x = 1;
+    for(let i = 0; i < 255; i++){ EXP[i] = x; LOG[x] = i; x <<= 1; if(x & 0x100) x ^= 0x11D; }
+    for(let i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
+  })();
+  const mul = (a, b) => (a === 0 || b === 0) ? 0 : EXP[LOG[a] + LOG[b]];
+  const TABLA = {
+    1:[7,1,19,0,0],2:[10,1,34,0,0],3:[15,1,55,0,0],4:[20,1,80,0,0],5:[26,1,108,0,0],
+    6:[18,2,68,0,0],7:[20,2,78,0,0],8:[24,2,97,0,0],9:[30,2,116,0,0],10:[18,2,68,2,69],
+    11:[20,4,81,0,0],12:[24,2,92,2,93],13:[26,4,107,0,0],14:[30,3,115,1,116],15:[22,5,87,1,88]
+  };
+  const ALIN = {
+    1:[],2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],
+    9:[6,26,46],10:[6,28,50],11:[6,30,54],12:[6,32,58],13:[6,34,62],14:[6,26,46,66],15:[6,26,48,70]
+  };
+  function genPoly(n){
+    let p = [1];
+    for(let i = 0; i < n; i++){
+      const np = new Array(p.length + 1).fill(0);
+      for(let j = 0; j < p.length; j++){ np[j + 1] ^= p[j]; np[j] ^= mul(p[j], EXP[i]); }
+      p = np;
+    }
+    return p;
+  }
+  function rsEncode(datos, ecLen){
+    const gen = genPoly(ecLen);
+    const res = new Array(ecLen).fill(0);
+    for(let i = 0; i < datos.length; i++){
+      const factor = datos[i] ^ res[0];
+      res.shift(); res.push(0);
+      if(factor !== 0) for(let j = 0; j < ecLen; j++) res[j] ^= mul(gen[j + 1], factor);
+    }
+    return res;
+  }
+  function penal(m, size){
+    let p = 0;
+    for(let i = 0; i < size; i++){
+      let f = 1, c = 1;
+      for(let j = 1; j < size; j++){
+        if(m[i][j] === m[i][j-1]) f++; else { if(f >= 5) p += 3 + (f - 5); f = 1; }
+        if(m[j][i] === m[j-1][i]) c++; else { if(c >= 5) p += 3 + (c - 5); c = 1; }
+      }
+      if(f >= 5) p += 3 + (f - 5);
+      if(c >= 5) p += 3 + (c - 5);
+    }
+    for(let i = 0; i < size - 1; i++) for(let j = 0; j < size - 1; j++){
+      const v = m[i][j];
+      if(v === m[i][j+1] && v === m[i+1][j] && v === m[i+1][j+1]) p += 3;
+    }
+    const p1 = [1,0,1,1,1,0,1,0,0,0,0], p2 = [0,0,0,0,1,0,1,1,1,0,1];
+    const scan = get => {
+      for(let i = 0; i + 11 <= size; i++){
+        let a = true, b = true;
+        for(let k = 0; k < 11; k++){
+          const v = get(i + k);
+          if(v !== p1[k]) a = false;
+          if(v !== p2[k]) b = false;
+        }
+        if(a) p += 40;
+        if(b) p += 40;
+      }
+    };
+    for(let i = 0; i < size; i++){ scan(k => m[i][k]); scan(k => m[k][i]); }
+    let osc = 0;
+    for(let i = 0; i < size; i++) for(let j = 0; j < size; j++) if(m[i][j]) osc++;
+    p += Math.floor(Math.abs(osc * 100 / (size * size) - 50) / 5) * 10;
+    return p;
+  }
+  function construir(texto){
+    const bytes = new TextEncoder().encode(texto);
+    let version = 0, cfg = null;
+    for(let v = 1; v <= 15; v++){
+      const c = TABLA[v];
+      const total = c[1] * c[2] + c[3] * c[4];
+      if(4 + (v <= 9 ? 8 : 16) + bytes.length * 8 <= total * 8){ version = v; cfg = c; break; }
+    }
+    if(!version) return null;
+    const ecLen = cfg[0], n1 = cfg[1], d1 = cfg[2], n2 = cfg[3], d2 = cfg[4];
+    const totalData = n1 * d1 + n2 * d2;
+    const bits = [];
+    const push = (val, len) => { for(let i = len - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+    push(0b0100, 4);
+    push(bytes.length, version <= 9 ? 8 : 16);
+    bytes.forEach(b => push(b, 8));
+    for(let i = 0; i < 4 && bits.length < totalData * 8; i++) bits.push(0);
+    while(bits.length % 8) bits.push(0);
+    const cw = [];
+    for(let i = 0; i < bits.length; i += 8){
+      let b = 0;
+      for(let j = 0; j < 8; j++) b = (b << 1) | bits[i + j];
+      cw.push(b);
+    }
+    const pads = [0xEC, 0x11];
+    let pi = 0;
+    while(cw.length < totalData) cw.push(pads[(pi++) & 1]);
+    const bloques = [];
+    let pos = 0;
+    for(let i = 0; i < n1; i++){ bloques.push(cw.slice(pos, pos + d1)); pos += d1; }
+    for(let i = 0; i < n2; i++){ bloques.push(cw.slice(pos, pos + d2)); pos += d2; }
+    const eccs = bloques.map(b => rsEncode(b, ecLen));
+    const maxD = Math.max(d1, d2);
+    const flujo = [];
+    for(let i = 0; i < maxD; i++)
+      for(let b = 0; b < bloques.length; b++) if(i < bloques[b].length) flujo.push(bloques[b][i]);
+    for(let i = 0; i < ecLen; i++)
+      for(let b = 0; b < eccs.length; b++) flujo.push(eccs[b][i]);
+    const size = version * 4 + 17;
+    const base = Array.from({length:size}, () => new Array(size).fill(0));
+    const res  = Array.from({length:size}, () => new Array(size).fill(false));
+    const set = (r, c, v) => { base[r][c] = v; res[r][c] = true; };
+    const finder = (r0, c0) => {
+      for(let i = -1; i <= 7; i++) for(let j = -1; j <= 7; j++){
+        const r = r0 + i, c = c0 + j;
+        if(r < 0 || r >= size || c < 0 || c >= size) continue;
+        const an = ((i >= 0 && i <= 6) && (j === 0 || j === 6)) || ((j >= 0 && j <= 6) && (i === 0 || i === 6));
+        const nu = i >= 2 && i <= 4 && j >= 2 && j <= 4;
+        set(r, c, (an || nu) ? 1 : 0);
+      }
+    };
+    finder(0, 0); finder(0, size - 7); finder(size - 7, 0);
+    for(let i = 8; i < size - 8; i++){
+      if(!res[6][i]) set(6, i, (i % 2 === 0) ? 1 : 0);
+      if(!res[i][6]) set(i, 6, (i % 2 === 0) ? 1 : 0);
+    }
+    for(const r of ALIN[version]) for(const c of ALIN[version]){
+      if(res[r][c]) continue;
+      for(let i = -2; i <= 2; i++) for(let j = -2; j <= 2; j++){
+        const v = (Math.abs(i) === 2 || Math.abs(j) === 2 || (i === 0 && j === 0)) ? 1 : 0;
+        set(r + i, c + j, v);
+      }
+    }
+    set(size - 8, 8, 1);
+    for(let i = 0; i <= 5; i++) res[8][i] = true;
+    res[8][7] = res[8][8] = res[7][8] = true;
+    for(let i = 9; i <= 14; i++) res[14 - i][8] = true;
+    for(let i = 0; i <= 6; i++) res[size - 1 - i][8] = true;
+    for(let i = 7; i <= 14; i++) res[8][size - 15 + i] = true;
+    if(version >= 7) for(let i = 0; i < 18; i++){
+      res[size - 11 + (i % 3)][Math.floor(i / 3)] = true;
+      res[Math.floor(i / 3)][size - 11 + (i % 3)] = true;
+    }
+    const flujoBits = [];
+    flujo.forEach(b => { for(let i = 7; i >= 0; i--) flujoBits.push((b >>> i) & 1); });
+    let idx = 0, sube = true;
+    for(let col = size - 1; col >= 1; col -= 2){
+      if(col === 6) col = 5;
+      for(let k = 0; k < size; k++){
+        const r = sube ? size - 1 - k : k;
+        for(let d = 0; d < 2; d++){
+          const c = col - d;
+          if(res[r][c]) continue;
+          base[r][c] = idx < flujoBits.length ? flujoBits[idx++] : 0;
+        }
+      }
+      sube = !sube;
+    }
+    const masc = [
+      (r,c) => (r + c) % 2 === 0, (r,c) => r % 2 === 0, (r,c) => c % 3 === 0,
+      (r,c) => (r + c) % 3 === 0, (r,c) => (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0,
+      (r,c) => ((r * c) % 2 + (r * c) % 3) === 0,
+      (r,c) => (((r * c) % 2 + (r * c) % 3) % 2) === 0,
+      (r,c) => (((r + c) % 2 + (r * c) % 3) % 2) === 0
+    ];
+    const fmt = mask => {
+      const d = (0b01 << 3) | mask;
+      let rem = d << 10;
+      for(let i = 14; i >= 10; i--) if((rem >>> i) & 1) rem ^= 0x537 << (i - 10);
+      return ((d << 10) | (rem & 0x3FF)) ^ 0x5412;
+    };
+    const ponerFormato = (m, mask) => {
+      const f = fmt(mask), bit = i => (f >>> i) & 1;
+      for(let i = 0; i <= 5; i++) m[8][i] = bit(i);
+      m[8][7] = bit(6); m[8][8] = bit(7); m[7][8] = bit(8);
+      for(let i = 9; i <= 14; i++) m[14 - i][8] = bit(i);
+      for(let i = 0; i <= 6; i++) m[size - 1 - i][8] = bit(i);
+      for(let i = 7; i <= 14; i++) m[8][size - 15 + i] = bit(i);
+      m[size - 8][8] = 1;
+    };
+    const ponerVersion = m => {
+      if(version < 7) return;
+      let rem = version << 12;
+      for(let i = 17; i >= 12; i--) if((rem >>> i) & 1) rem ^= 0x1F25 << (i - 12);
+      const v = (version << 12) | (rem & 0xFFF);
+      for(let i = 0; i < 18; i++){
+        const b = (v >>> i) & 1;
+        m[size - 11 + (i % 3)][Math.floor(i / 3)] = b;
+        m[Math.floor(i / 3)][size - 11 + (i % 3)] = b;
+      }
+    };
+    let mejor = null, mejorP = Infinity;
+    for(let mask = 0; mask < 8; mask++){
+      const m = base.map(f => f.slice());
+      for(let r = 0; r < size; r++) for(let c = 0; c < size; c++){
+        if(res[r][c]) continue;
+        if(masc[mask](r, c)) m[r][c] ^= 1;
+      }
+      ponerFormato(m, mask);
+      ponerVersion(m);
+      const p = penal(m, size);
+      if(p < mejorP){ mejorP = p; mejor = m; }
+    }
+    return mejor;
+  }
+  function dibujar(canvas, m){
+    const size = m.length, quiet = 4;
+    const esc = Math.max(2, Math.floor(320 / (size + quiet * 2)));
+    const total = (size + quiet * 2) * esc;
+    canvas.width = total; canvas.height = total;
+    canvas.style.width = total + "px"; canvas.style.height = total + "px";
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, total, total);
+    ctx.fillStyle = "#000";
+    for(let r = 0; r < size; r++) for(let c = 0; c < size; c++){
+      if(m[r][c]) ctx.fillRect((c + quiet) * esc, (r + quiet) * esc, esc, esc);
+    }
+  }
+  return { construir, dibujar };
+})();
+
+/* ===== PANEL ===== */
+(function(){
+  "use strict";
+
+  const CLAVE = "andreani_clientes_v1";
+  const CLAVE_API = "andreani_api_url";
+  const CLAVE_URL = "andreani_url_portal";
+
+  let datos = [];
+  let editandoId = null;
+  const $ = id => document.getElementById(id);
+
+  const esc = s => String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function fmtFecha(f){
+    if(!f) return "—";
+    const p = String(f).split("-");
+    return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : f;
+  }
+  function claseEstado(e){
+    if(e === "Entregado") return "entregado";
+    if(e === "En tránsito") return "transito";
+    return "pendiente";
+  }
+  function apiURL(){ return $("apiUrl").value.trim(); }
+  function baseURL(){
+    const g = ($("urlPortal").value || "").trim();
+    if(g) return g;
+    return location.href.split("?")[0].split("#")[0].replace(/[^/]*$/, "seguimiento.html");
+  }
+  function setConexion(estado, texto){
+    const b = $("connBadge");
+    b.className = "badge-conn" + (estado === true ? " on" : estado === false ? " off" : "");
+    b.textContent = texto;
+  }
+
+  function cargarLocal(){
+    try{ datos = JSON.parse(localStorage.getItem(CLAVE)) || []; }
+    catch(e){ datos = []; }
+  }
+  function guardarLocal(){ localStorage.setItem(CLAVE, JSON.stringify(datos)); }
+
+  function normalizar(d){
+    return {
+      id: d.id || uid(),
+      cliente: d.cliente || "",
+      telefono: d.telefono || "",
+      producto: d.producto || "",
+      fecha: d.fecha || "",
+      direccion: d.direccion || "",
+      localidad: d.localidad || "",
+      seguimiento: d.seguimiento || "",
+      estado: d.estado || "Pendiente"
+    };
+  }
+
+  /* ---------- backend ---------- */
+  async function apiPost(accion, extra){
+    const url = apiURL();
+    if(!url) return null;
+    const r = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify(Object.assign({accion: accion}, extra || {}))
+    });
+    return await r.json();
+  }
+
+  async function sincronizar(silencioso){
+    const url = apiURL();
+    if(!url){ setConexion(null, "Sin configurar"); return; }
+    setConexion(null, "Sincronizando...");
+    try{
+      const r = await fetch(url + "?accion=listar");
+      const j = await r.json();
+      if(!j.ok) throw new Error(j.error || "error");
+      datos = (j.pedidos || []).map(normalizar);
+      guardarLocal();
+      render();
+      setConexion(true, "Conectado · " + datos.length + " pedidos");
+    }catch(e){
+      setConexion(false, "Sin conexión · datos locales");
+      if(!silencioso) alert("No se pudo conectar con la planilla. Se muestran los datos guardados en este navegador.");
+    }
+  }
+
+  /* ---------- render ---------- */
+  function render(){
+    const filtro = $("buscador").value.trim().toLowerCase();
+    const lista = datos.filter(d => {
+      if(!filtro) return true;
+      return [d.cliente, d.producto, d.direccion, d.seguimiento, d.localidad]
+        .join(" ").toLowerCase().includes(filtro);
+    });
+    const tb = $("tbody");
+    tb.innerHTML = "";
+    if(lista.length === 0){
+      $("vacio").style.display = "block";
+    }else{
+      $("vacio").style.display = "none";
+      lista.forEach(d => {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          "<td><strong>" + esc(d.cliente) + "</strong></td>" +
+          "<td>" + esc(d.telefono || "—") + "</td>" +
+          "<td>" + esc(d.producto) + "</td>" +
+          "<td>" + fmtFecha(d.fecha) + "</td>" +
+          "<td>" + esc(d.direccion) + (d.localidad ? "<br><small>" + esc(d.localidad) + "</small>" : "") + "</td>" +
+          "<td>" + esc(d.seguimiento || "—") + "</td>" +
+          "<td><span class='estado " + claseEstado(d.estado) + "'>" + esc(d.estado) + "</span></td>" +
+          "<td><div class='acciones'>" +
+            "<button class='mini editar' data-acc='editar' data-id='" + d.id + "'>Editar</button>" +
+            "<button class='mini link' data-acc='link' data-id='" + d.id + "'>Link / QR</button>" +
+            "<button class='mini borrar' data-acc='borrar' data-id='" + d.id + "'>Borrar</button>" +
+          "</div></td>";
+        tb.appendChild(tr);
+      });
+    }
+    $("statTotal").textContent = datos.length;
+    $("statPend").textContent = datos.filter(d => d.estado === "Pendiente").length;
+    $("statTransito").textContent = datos.filter(d => d.estado === "En tránsito").length;
+    $("statEntreg").textContent = datos.filter(d => d.estado === "Entregado").length;
+  }
+
+  function limpiarForm(){
+    $("formEnvio").reset();
+    $("editId").value = "";
+    editandoId = null;
+    $("formTitulo").textContent = "Agregar cliente";
+    $("btnGuardar").textContent = "Guardar cliente";
+    $("btnCancelar").style.display = "none";
+  }
+
+  /* ---------- alta / edición ---------- */
+  $("formEnvio").addEventListener("submit", async function(ev){
+    ev.preventDefault();
+    const reg = {
+      id: editandoId || uid(),
+      cliente: $("cliente").value.trim(),
+      telefono: $("telefono").value.trim(),
+      producto: $("producto").value.trim(),
+      fecha: $("fecha").value,
+      direccion: $("direccion").value.trim(),
+      localidad: $("localidad").value.trim(),
+      seguimiento: $("seguimiento").value.trim(),
+      estado: $("estado").value
+    };
+    if(!reg.cliente || !reg.producto || !reg.fecha || !reg.direccion){
+      alert("Completá cliente, producto, fecha de entrega y dirección.");
+      return;
+    }
+    if(editandoId){
+      const i = datos.findIndex(d => d.id === editandoId);
+      if(i > -1) datos[i] = reg;
+    }else{
+      datos.push(reg);
+    }
+    guardarLocal();
+    limpiarForm();
+    render();
+
+    try{
+      const j = await apiPost("guardar", {registro: reg});
+      if(j && j.ok) setConexion(true, "Conectado · " + datos.length + " pedidos");
+      else if(j && !j.ok) alert("La planilla rechazó el guardado: " + (j.error || ""));
+    }catch(e){ setConexion(false, "Sin conexión · guardado local"); }
+  });
+
+  /* ---------- link / QR ---------- */
+  function b64url(str){
+    const bytes = new TextEncoder().encode(str);
+    let bin = "";
+    bytes.forEach(b => bin += String.fromCharCode(b));
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function linkDe(d){
+    const p = new URLSearchParams();
+    if(d.seguimiento){
+      p.set("seg", d.seguimiento);
+    }else{
+      const o = {};
+      ["cliente","telefono","producto","fecha","direccion","localidad","estado"]
+        .forEach(k => { if(d[k]) o[k] = d[k]; });
+      p.set("d", b64url(JSON.stringify(o)));
+    }
+    if(apiURL()) p.set("api", apiURL());
+    return baseURL() + "?" + p.toString();
+  }
+
+  function abrirModal(d){
+    const url = linkDe(d);
+    $("modalSub").textContent = d.cliente + " · " + (d.seguimiento || "sin nro. de seguimiento");
+    $("modalLink").textContent = url;
+    const m = QR.construir(url);
+    const cv = $("qrCanvas");
+    if(m){ QR.dibujar(cv, m); cv.style.display = "block"; } else cv.style.display = "none";
+    $("modal").style.display = "flex";
+    $("modal").dataset.url = url;
+    $("modal").dataset.nombre = d.cliente;
+  }
+  function cerrarModal(){ $("modal").style.display = "none"; }
+
+  $("btnCopiar").addEventListener("click", function(){
+    const url = $("modal").dataset.url;
+    navigator.clipboard.writeText(url).then(
+      () => alert("Link copiado."),
+      () => prompt("Copiá el link:", url)
+    );
+  });
+  $("btnWsp").addEventListener("click", function(){
+    const url = $("modal").dataset.url;
+    const nombre = ($("modal").dataset.nombre || "").split(" ")[0];
+    window.open("https://wa.me/?text=" + encodeURIComponent(
+      "Hola " + nombre + ", seguí tu pedido Andreani acá: " + url), "_blank");
+  });
+  $("btnCerrar").addEventListener("click", cerrarModal);
+  $("modal").addEventListener("click", ev => { if(ev.target === $("modal")) cerrarModal(); });
+  document.addEventListener("keydown", ev => { if(ev.key === "Escape") cerrarModal(); });
+
+  /* ---------- acciones de tabla ---------- */
+  $("tbody").addEventListener("click", async function(ev){
+    const b = ev.target.closest("button[data-acc]");
+    if(!b) return;
+    const id = b.getAttribute("data-id");
+    const acc = b.getAttribute("data-acc");
+
+    if(acc === "borrar"){
+      if(!confirm("¿Borrar este cliente?")){
+        return;
+      }
+      datos = datos.filter(d => d.id !== id);
+      guardarLocal(); render();
+      try{ await apiPost("borrar", {id: id}); }catch(e){}
+    }
+    if(acc === "link"){
+      const d = datos.find(x => x.id === id);
+      if(d) abrirModal(d);
+    }
+    if(acc === "editar"){
+      const d = datos.find(x => x.id === id);
+      if(!d) return;
+      editandoId = id;
+      $("editId").value = id;
+      $("cliente").value = d.cliente;
+      $("telefono").value = d.telefono || "";
+      $("producto").value = d.producto;
+      $("fecha").value = d.fecha;
+      $("direccion").value = d.direccion;
+      $("localidad").value = d.localidad || "";
+      $("seguimiento").value = d.seguimiento || "";
+      $("estado").value = d.estado;
+      $("formTitulo").textContent = "Editar cliente";
+      $("btnGuardar").textContent = "Guardar cambios";
+      $("btnCancelar").style.display = "inline-block";
+      window.scrollTo({top:0, behavior:"smooth"});
+    }
+  });
+
+  $("btnCancelar").addEventListener("click", limpiarForm);
+  $("buscador").addEventListener("input", render);
+  $("btnSync").addEventListener("click", () => sincronizar(false));
+
+  /* ---------- exportar / importar ---------- */
+  $("btnExport").addEventListener("click", function(){
+    if(datos.length === 0){ alert("No hay datos para exportar."); return; }
+    const cab = ["Cliente","Telefono","Producto","Fecha de entrega","Direccion","Localidad","Seguimiento","Estado"];
+    const filas = datos.map(d => [d.cliente, d.telefono || "", d.producto, d.fecha, d.direccion,
+      d.localidad || "", d.seguimiento || "", d.estado]);
+    const csv = [cab].concat(filas).map(f => f.map(c => '"' + String(c == null ? "" : c).replace(/"/g, '""') + '"').join(";")).join("\r\n");
+    const blob = new Blob(["\ufeff" + csv], {type:"text/csv;charset=utf-8;"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "andreani_clientes_" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  });
+
+  $("btnExportJson").addEventListener("click", function(){
+    if(datos.length === 0){ alert("No hay datos para exportar."); return; }
+    const blob = new Blob([JSON.stringify(datos, null, 2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "andreani_clientes_" + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  });
+
+  function splitCSVLine(linea, delim){
+    const out = []; let cell = ""; let inQ = false;
+    for(let i = 0; i < linea.length; i++){
+      const c = linea[i];
+      if(inQ){
+        if(c === '"'){ if(linea[i+1] === '"'){ cell += '"'; i++; } else inQ = false; }
+        else cell += c;
+      }else{
+        if(c === '"') inQ = true;
+        else if(c === delim){ out.push(cell); cell = ""; }
+        else cell += c;
+      }
+    }
+    out.push(cell);
+    return out;
+  }
+  function parseCSV(texto){
+    const lineas = texto.split(/\r?\n/).filter(l => l.trim() !== "");
+    if(lineas.length < 2) return [];
+    const head = lineas[0];
+    const delim = (head.split(";").length >= head.split(",").length) ? ";" : ",";
+    const cab = splitCSVLine(head, delim).map(h => h.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+    const idx = k => cab.findIndex(h => h.indexOf(k) === 0);
+    const iC = idx("cliente"), iT = idx("telefono"), iP = idx("producto"), iF = idx("fecha"),
+          iD = idx("direccion"), iL = idx("localidad"), iS = idx("seguimiento"), iE = idx("estado");
+    const out = [];
+    for(let i = 1; i < lineas.length; i++){
+      const c = splitCSVLine(lineas[i], delim);
+      const g = j => (j > -1 ? (c[j] || "").trim() : "");
+      out.push({ id: uid(), cliente: g(iC), telefono: g(iT), producto: g(iP), fecha: g(iF),
+        direccion: g(iD), localidad: g(iL), seguimiento: g(iS), estado: g(iE) || "Pendiente" });
+    }
+    return out;
+  }
+  function parseArchivo(texto){
+    texto = String(texto).replace(/^\ufeff/, "").trim();
+    if(texto[0] === "[" || texto[0] === "{"){
+      try{
+        const j = JSON.parse(texto);
+        const arr = Array.isArray(j) ? j : (j.clientes || j.pedidos || [j]);
+        return arr.filter(x => x && typeof x === "object").map(normalizar);
+      }catch(e){}
+    }
+    return parseCSV(texto);
+  }
+
+  $("btnImportar").addEventListener("click", () => $("fileImport").click());
+  $("fileImport").addEventListener("change", function(){
+    const f = this.files && this.files[0];
+    if(!f) return;
+    const lector = new FileReader();
+    lector.onload = async () => {
+      const regs = parseArchivo(lector.result);
+      if(regs.length === 0){ alert("No se encontraron pedidos en el archivo."); return; }
+      if(!confirm("Se van a REEMPLAZAR los " + datos.length + " pedidos actuales por los " + regs.length + " del archivo. ¿Seguir?")) return;
+      datos = regs;
+      guardarLocal(); render();
+      try{
+        const j = await apiPost("reemplazar", {registros: regs});
+        if(j && j.ok) alert("Se subieron " + regs.length + " pedidos a la planilla.");
+      }catch(e){ alert("Se cargaron localmente, pero no se pudo subir a la planilla."); }
+      this.value = "";
+    };
+    lector.readAsText(f, "utf-8");
+  });
+
+  $("btnLimpiar").addEventListener("click", async function(){
+    if(datos.length === 0) return;
+    if(!confirm("¿Borrar TODOS los clientes cargados?")) return;
+    datos = []; guardarLocal(); render(); limpiarForm();
+    try{ await apiPost("borrarTodo"); }catch(e){}
+  });
+
+  /* ---------- arranque ---------- */
+  $("apiUrl").value = localStorage.getItem(CLAVE_API) || "";
+  $("urlPortal").value = localStorage.getItem(CLAVE_URL) || "";
+  $("apiUrl").addEventListener("change", function(){
+    localStorage.setItem(CLAVE_API, this.value.trim());
+    sincronizar(true);
+  });
+  $("urlPortal").addEventListener("change", function(){
+    localStorage.setItem(CLAVE_URL, this.value.trim());
+  });
+
+  cargarLocal();
+  render();
+  if(apiURL()) sincronizar(true);
+  else setConexion(null, "Sin configurar");
+})();
+</script>
+</body>
+</html>
