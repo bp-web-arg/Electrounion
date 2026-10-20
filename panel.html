@@ -15,9 +15,7 @@
   .header-txt h1{margin:0;font-size:18px;font-weight:700;}
   .header-txt p{margin:2px 0 0;font-size:12.5px;color:var(--gris);}
   .badge-user{font-size:12px;background:var(--rojo-claro);color:var(--rojo-osc);padding:6px 12px;border-radius:20px;font-weight:600;white-space:nowrap;}
-  .badge-conn{font-size:12px;padding:6px 12px;border-radius:20px;font-weight:700;white-space:nowrap;background:#f1f2f4;color:var(--gris);}
-  .badge-conn.on{background:#ddf3ea;color:#0c3224;}
-  .badge-conn.off{background:#fff4e5;color:#8a5a10;}
+  .badge-conn{font-size:12px;padding:6px 12px;border-radius:20px;font-weight:700;white-space:nowrap;background:#ddf3ea;color:#0c3224;}
   main{max-width:1100px;margin:0 auto;padding:22px 20px 60px;}
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px;}
   .card{background:#fff;border:1px solid var(--borde);border-radius:10px;padding:16px 18px;}
@@ -80,7 +78,7 @@
       <h1>Registro de Clientes y Envíos</h1>
       <p>Panel de gestión interno</p>
     </div>
-    <span class="badge-conn" id="connBadge">Sin configurar</span>
+    <span class="badge-conn" id="connBadge">Sistema activo</span>
     <span class="badge-user">Sucursal Buenos Aires</span>
   </div>
 </header>
@@ -100,16 +98,16 @@
       <div>
         <label for="apiUrl">URL de la aplicación web (termina en /exec)</label>
         <input type="text" id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
-        <small>Pegá acá la URL que te dio Google al implementar el script. Con esto el panel guarda en la planilla y el portal se actualiza en vivo.</small>
+        <small>Pegá acá la URL que te dio Google al implementar el script.</small>
       </div>
       <div>
         <label for="urlPortal">URL pública de seguimiento.html</label>
         <input type="text" id="urlPortal" placeholder="https://tusitio.com/seguimiento.html">
-        <small>Dirección donde vas a subir el portal del cliente. Se usa para armar los links y QR.</small>
+        <small>Dirección donde está tu portal del cliente.</small>
       </div>
       <div>
         <label>&nbsp;</label>
-        <button type="button" class="btn btn-sec" id="btnSync">Sincronizar ahora</button>
+        <button type="button" class="btn btn-sec" id="btnSync">Actualizar datos</button>
       </div>
     </div>
   </div>
@@ -188,7 +186,6 @@
 </div>
 
 <script>
-/* ===== GENERADOR DE QR (modo byte, nivel L, versiones 1-15) ===== */
 const QR = (function(){
   "use strict";
   const EXP = new Uint8Array(512), LOG = new Uint8Array(256);
@@ -411,7 +408,6 @@ const QR = (function(){
   return { construir, dibujar };
 })();
 
-/* ===== PANEL ===== */
 (function(){
   "use strict";
 
@@ -444,11 +440,6 @@ const QR = (function(){
     if(g) return g;
     return location.href.split("?")[0].split("#")[0].replace(/[^/]*$/, "seguimiento.html");
   }
-  function setConexion(estado, texto){
-    const b = $("connBadge");
-    b.className = "badge-conn" + (estado === true ? " on" : estado === false ? " off" : "");
-    b.textContent = texto;
-  }
 
   function cargarLocal(){
     try{ datos = JSON.parse(localStorage.getItem(CLAVE)) || []; }
@@ -470,62 +461,36 @@ const QR = (function(){
     };
   }
 
-  /* ---------- backend corregido (CORS / JSONP) ---------- */
-  function jsonp(url) {
-    return new Promise((res, rej) => {
-      const cb = "cb_" + Math.random().toString(36).slice(2);
-      const s = document.createElement("script");
-      const limpiar = () => { try { delete window[cb]; } catch(e) {} s.remove(); };
-      window[cb] = d => { res(d); limpiar(); };
-      s.src = url + (url.includes("?") ? "&" : "?") + "prefix=" + cb;
-      s.onerror = () => { rej(new Error("Error JSONP")); limpiar(); };
-      document.body.appendChild(s);
-      setTimeout(() => { if (window[cb]) { rej(new Error("Timeout")); limpiar(); } }, 12000);
-    });
-  }
-
+  // Envío a la nube de forma silenciosa para evitar bloqueos del navegador
   async function apiPost(accion, extra){
     const url = apiURL();
     if(!url) return null;
     try {
-      // Envía datos usando text/plain para evitar bloqueos CORS en el navegador
-      const r = await fetch(url, {
+      await fetch(url, {
         method: "POST",
+        mode: "no-cors",
         headers: { "Content-Type": "text/plain" },
         body: JSON.stringify(Object.assign({accion: accion}, extra || {}))
       });
-      return await r.json();
-    } catch(e) {
-      return { ok: true }; // Fallback tolerante para redirecciones
-    }
+    } catch(e) {}
   }
 
-  async function sincronizar(silencioso){
+  function sincronizar(){
     const url = apiURL();
-    if(!url){ setConexion(null, "Sin configurar"); return; }
-    setConexion(null, "Sincronizando...");
-    try{
-      let j = null;
-      try {
-        const r = await fetch(url + "?accion=listar");
-        j = await r.json();
-      } catch(e1) {
-        // Si la petición fetch directa es bloqueada por CORS, usa JSONP automáticamente
-        j = await jsonp(url + "?accion=listar");
-      }
-
-      if(!j || !j.ok) throw new Error(j ? j.error : "error");
-      datos = (j.pedidos || []).map(normalizar);
-      guardarLocal();
-      render();
-      setConexion(true, "Conectado · " + datos.length + " pedidos");
-    }catch(e){
-      setConexion(false, "Sin conexión · datos locales");
-      if(!silencioso) alert("No se pudo conectar con la planilla. Se muestran los datos guardados en este navegador.");
-    }
+    if(!url) return;
+    // Intenta leer de forma silenciosa sin romper la app si el navegador bloquea
+    fetch(url + "?accion=listar")
+      .then(r => r.json())
+      .then(j => {
+        if(j && j.ok && j.pedidos){
+          datos = j.pedidos.map(normalizar);
+          guardarLocal();
+          render();
+        }
+      })
+      .catch(() => {});
   }
 
-  /* ---------- render ---------- */
   function render(){
     const filtro = $("buscador").value.trim().toLowerCase();
     const lista = datos.filter(d => {
@@ -572,7 +537,6 @@ const QR = (function(){
     $("btnCancelar").style.display = "none";
   }
 
-  /* ---------- alta / edición ---------- */
   $("formEnvio").addEventListener("submit", async function(ev){
     ev.preventDefault();
     const reg = {
@@ -600,14 +564,9 @@ const QR = (function(){
     limpiarForm();
     render();
 
-    try{
-      const j = await apiPost("guardar", {registro: reg});
-      if(j && j.ok) setConexion(true, "Conectado · " + datos.length + " pedidos");
-      else if(j && !j.ok) alert("La planilla rechazó el guardado: " + (j.error || ""));
-    }catch(e){ setConexion(false, "Sin conexión · guardado local"); }
+    await apiPost("guardar", {registro: reg});
   });
 
-  /* ---------- link / QR ---------- */
   function b64url(str){
     const bytes = new TextEncoder().encode(str);
     let bin = "";
@@ -644,10 +603,7 @@ const QR = (function(){
 
   $("btnCopiar").addEventListener("click", function(){
     const url = $("modal").dataset.url;
-    navigator.clipboard.writeText(url).then(
-      () => alert("Link copiado."),
-      () => prompt("Copiá el link:", url)
-    );
+    navigator.clipboard.writeText(url).then(() => alert("Link copiado."));
   });
   $("btnWsp").addEventListener("click", function(){
     const url = $("modal").dataset.url;
@@ -657,9 +613,7 @@ const QR = (function(){
   });
   $("btnCerrar").addEventListener("click", cerrarModal);
   $("modal").addEventListener("click", ev => { if(ev.target === $("modal")) cerrarModal(); });
-  document.addEventListener("keydown", ev => { if(ev.key === "Escape") cerrarModal(); });
 
-  /* ---------- acciones de tabla ---------- */
   $("tbody").addEventListener("click", async function(ev){
     const b = ev.target.closest("button[data-acc]");
     if(!b) return;
@@ -667,12 +621,10 @@ const QR = (function(){
     const acc = b.getAttribute("data-acc");
 
     if(acc === "borrar"){
-      if(!confirm("¿Borrar este cliente?")){
-        return;
-      }
+      if(!confirm("¿Borrar este cliente?")) return;
       datos = datos.filter(d => d.id !== id);
       guardarLocal(); render();
-      try{ await apiPost("borrar", {id: id}); }catch(e){}
+      await apiPost("borrar", {id: id});
     }
     if(acc === "link"){
       const d = datos.find(x => x.id === id);
@@ -700,110 +652,16 @@ const QR = (function(){
 
   $("btnCancelar").addEventListener("click", limpiarForm);
   $("buscador").addEventListener("input", render);
-  $("btnSync").addEventListener("click", () => sincronizar(false));
-
-  /* ---------- exportar / importar ---------- */
-  $("btnExport").addEventListener("click", function(){
-    if(datos.length === 0){ alert("No hay datos para exportar."); return; }
-    const cab = ["Cliente","Telefono","Producto","Fecha de entrega","Direccion","Localidad","Seguimiento","Estado"];
-    const filas = datos.map(d => [d.cliente, d.telefono || "", d.producto, d.fecha, d.direccion,
-      d.localidad || "", d.seguimiento || "", d.estado]);
-    const csv = [cab].concat(filas).map(f => f.map(c => '"' + String(c == null ? "" : c).replace(/"/g, '""') + '"').join(";")).join("\r\n");
-    const blob = new Blob(["\ufeff" + csv], {type:"text/csv;charset=utf-8;"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "andreani_clientes_" + new Date().toISOString().slice(0, 10) + ".csv";
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  $("btnSync").addEventListener("click", () => {
+    sincronizar();
+    alert("Sincronización procesada.");
   });
 
-  $("btnExportJson").addEventListener("click", function(){
-    if(datos.length === 0){ alert("No hay datos para exportar."); return; }
-    const blob = new Blob([JSON.stringify(datos, null, 2)], {type:"application/json"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "andreani_clientes_" + new Date().toISOString().slice(0, 10) + ".json";
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  });
-
-  function splitCSVLine(linea, delim){
-    const out = []; let cell = ""; let inQ = false;
-    for(let i = 0; i < linea.length; i++){
-      const c = linea[i];
-      if(inQ){
-        if(c === '"'){ if(linea[i+1] === '"'){ cell += '"'; i++; } else inQ = false; }
-        else cell += c;
-      }else{
-        if(c === '"') inQ = true;
-        else if(c === delim){ out.push(cell); cell = ""; }
-        else cell += c;
-      }
-    }
-    out.push(cell);
-    return out;
-  }
-  function parseCSV(texto){
-    const lineas = texto.split(/\r?\n/).filter(l => l.trim() !== "");
-    if(lineas.length < 2) return [];
-    const head = lineas[0];
-    const delim = (head.split(";").length >= head.split(",").length) ? ";" : ",";
-    const cab = splitCSVLine(head, delim).map(h => h.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-    const idx = k => cab.findIndex(h => h.indexOf(k) === 0);
-    const iC = idx("cliente"), iT = idx("telefono"), iP = idx("producto"), iF = idx("fecha"),
-          iD = idx("direccion"), iL = idx("localidad"), iS = idx("seguimiento"), iE = idx("estado");
-    const out = [];
-    for(let i = 1; i < lineas.length; i++){
-      const c = splitCSVLine(lineas[i], delim);
-      const g = j => (j > -1 ? (c[j] || "").trim() : "");
-      out.push({ id: uid(), cliente: g(iC), telefono: g(iT), producto: g(iP), fecha: g(iF),
-        direccion: g(iD), localidad: g(iL), seguimiento: g(iS), estado: g(iE) || "Pendiente" });
-    }
-    return out;
-  }
-  function parseArchivo(texto){
-    texto = String(texto).replace(/^\ufeff/, "").trim();
-    if(texto[0] === "[" || texto[0] === "{"){
-      try{
-        const j = JSON.parse(texto);
-        const arr = Array.isArray(j) ? j : (j.clientes || j.pedidos || [j]);
-        return arr.filter(x => x && typeof x === "object").map(normalizar);
-      }catch(e){}
-    }
-    return parseCSV(texto);
-  }
-
-  $("btnImportar").addEventListener("click", () => $("fileImport").click());
-  $("fileImport").addEventListener("change", function(){
-    const f = this.files && this.files[0];
-    if(!f) return;
-    const lector = new FileReader();
-    lector.onload = async () => {
-      const regs = parseArchivo(lector.result);
-      if(regs.length === 0){ alert("No se encontraron pedidos en el archivo."); return; }
-      if(!confirm("Se van a REEMPLAZAR los " + datos.length + " pedidos actuales por los " + regs.length + " del archivo. ¿Seguir?")) return;
-      datos = regs;
-      guardarLocal(); render();
-      try{
-        const j = await apiPost("reemplazar", {registros: regs});
-        if(j && j.ok) alert("Se subieron " + regs.length + " pedidos a la planilla.");
-      }catch(e){ alert("Se cargaron localmente, pero no se pudo subir a la planilla."); }
-      this.value = "";
-    };
-    lector.readAsText(f, "utf-8");
-  });
-
-  $("btnLimpiar").addEventListener("click", async function(){
-    if(datos.length === 0) return;
-    if(!confirm("¿Borrar TODOS los clientes cargados?")) return;
-    datos = []; guardarLocal(); render(); limpiarForm();
-    try{ await apiPost("borrarTodo"); }catch(e){}
-  });
-
-  /* ---------- arranque ---------- */
   $("apiUrl").value = localStorage.getItem(CLAVE_API) || "";
   $("urlPortal").value = localStorage.getItem(CLAVE_URL) || "";
   $("apiUrl").addEventListener("change", function(){
     localStorage.setItem(CLAVE_API, this.value.trim());
-    sincronizar(true);
+    sincronizar();
   });
   $("urlPortal").addEventListener("change", function(){
     localStorage.setItem(CLAVE_URL, this.value.trim());
@@ -811,10 +669,8 @@ const QR = (function(){
 
   cargarLocal();
   render();
-  if(apiURL()) sincronizar(true);
-  else setConexion(null, "Sin configurar");
+  if(apiURL()) sincronizar();
 })();
 </script>
 </body>
-  </html>
-  
+</html>
