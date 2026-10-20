@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Andreani · Seguí tu pedido</title>
+<style>
+  :root{--rojo:#d71920;--rojo-osc:#b6040b;--rojo-claro:#fbe8e9;--gris:#4e555e;--gris-claro:#f4f5f7;--borde:#e2e4e8;--ok:#0c7a4f;--ok-bg:#ddf3ea;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--gris-claro);color:#272a2f;}
+  header{background:#fff;border-bottom:4px solid var(--rojo);box-shadow:0 1px 6px rgba(0,0,0,.08);}
+  .header-inner{max-width:1000px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .logo{height:42px;width:auto;display:block;}
+  .header-txt{flex:1;min-width:160px;}
+  .header-txt h1{margin:0;font-size:18px;font-weight:700;}
+  .header-txt p{margin:2px 0 0;font-size:12.5px;color:var(--gris);}
+  .badge-user{font-size:12px;background:var(--rojo-claro);color:var(--rojo-osc);padding:6px 12px;border-radius:20px;font-weight:600;white-space:nowrap;}
+  .hero{background:linear-gradient(135deg,var(--rojo),var(--rojo-osc));color:#fff;padding:34px 20px 70px;text-align:center;}
+  .hero h2{margin:0 0 8px;font-size:24px;font-weight:800;}
+  .hero p{margin:0 0 20px;font-size:14px;opacity:.92;}
+  .buscador{max-width:560px;margin:0 auto;display:flex;gap:8px;background:#fff;border-radius:12px;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);}
+  .buscador input{flex:1;border:none;padding:12px 14px;font-size:15px;border-radius:8px;color:#272a2f;min-width:0;}
+  .buscador input:focus{outline:none;background:var(--gris-claro);}
+  .buscador button{border:none;background:var(--rojo);color:#fff;font-weight:700;font-size:14px;padding:12px 22px;border-radius:8px;cursor:pointer;}
+  .hero .hint{margin:14px 0 0;font-size:12.5px;opacity:.85;}
+  main{max-width:1000px;margin:-46px auto 0;padding:0 20px 60px;}
+  .caja{background:#fff;border:1px solid var(--borde);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.06);}
+  .tarjeta{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:22px;margin-bottom:18px;box-shadow:0 4px 16px rgba(0,0,0,.06);}
+  .tarjeta-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--borde);padding-bottom:16px;margin-bottom:18px;}
+  .etq{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#818891;margin-bottom:4px;}
+  .seg{font-size:18px;font-weight:800;color:var(--rojo-osc);letter-spacing:.4px;word-break:break-all;}
+  .chip{font-size:11.5px;font-weight:800;padding:6px 13px;border-radius:20px;white-space:nowrap;text-transform:uppercase;letter-spacing:.4px;}
+  .chip.pendiente{background:#fff9ed;color:#684d18;}
+  .chip.transito{background:#edeffb;color:#1f2856;}
+  .chip.entregado{background:var(--ok-bg);color:#0c3224;}
+  .timeline{list-style:none;margin:0 0 6px;padding:0;}
+  .timeline li{position:relative;padding:0 0 22px 40px;}
+  .timeline li:last-child{padding-bottom:0;}
+  .timeline li::before{content:"";position:absolute;left:9px;top:3px;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #ccd1d8;z-index:1;}
+  .timeline li::after{content:"";position:absolute;left:15px;top:20px;bottom:-2px;width:2px;background:var(--borde);}
+  .timeline li:last-child::after{display:none;}
+  .timeline li strong{display:block;font-size:14.5px;}
+  .timeline li small{display:block;font-size:12.5px;color:#818891;margin-top:2px;}
+  .timeline li.done::before{background:var(--ok);border-color:var(--ok);}
+  .timeline li.done::after{background:var(--ok);}
+  .timeline li.current::before{border-color:var(--rojo);background:#fff;box-shadow:0 0 0 4px var(--rojo-claro);}
+  .timeline li.current strong{color:var(--rojo-osc);}
+  .timeline li.pending strong,.timeline li.pending small{color:#a9afb8;}
+  .datos{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;border-top:1px solid var(--borde);padding-top:18px;margin-top:18px;}
+  .dato span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:#818891;margin-bottom:3px;}
+  .dato b{font-size:14px;font-weight:600;line-height:1.35;}
+  .alerta{display:inline-block;background:#fff4e5;color:#8a5a10;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:12px;margin-left:6px;text-transform:uppercase;}
+  .vacio{text-align:center;padding:38px 22px;color:var(--gris);font-size:14px;}
+  .vacio .ico{font-size:34px;display:block;margin-bottom:10px;}
+  .vacio h3{margin:0 0 6px;font-size:16px;}
+  .vacio p{margin:0;font-size:13.5px;}
+  .pie-info{text-align:center;font-size:12px;color:#818891;margin-top:18px;}
+  .pie-info button{border:1px solid var(--borde);background:#fff;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;color:var(--gris);cursor:pointer;margin-left:8px;}
+  footer{text-align:center;padding:24px 20px;font-size:12px;color:#818891;border-top:1px solid var(--borde);background:#fff;}
+  footer strong{color:var(--rojo);}
+  @media (max-width:600px){
+    .logo{height:34px;} .header-txt h1{font-size:16px;}
+    .hero{padding:26px 16px 62px;} .hero h2{font-size:20px;}
+    .buscador{flex-direction:column;} .buscador button{width:100%;}
+    main{padding:0 14px 50px;} .tarjeta{padding:18px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <img class="logo" alt="Andreani"
+      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' id='Capa_1' data-name='Capa 1' width='250.1771mm' height='84.8915mm' viewBox='0 0 709.1633 240.6375'%3E%3Cdefs%3E%3Cstyle%3E.cls-1%7Bfill:%23d0080f;%7D%3C/style%3E%3C/defs%3E%3Cpath class='cls-1' d='M286.7178,148.36l-1.9082-8.3767H266.6949l-4.5583,8.3767H250.0842l25.06-45.2013h13.76L300.0067,148.36Zm-5.7929-25.6509a36.881,36.881,0,0,1-1.1964-7.5061h-.1568a63.0484,63.0484,0,0,1-3.7883,8.043l-4.8076,8.4933h12.1388Z'/%3E%3Cpath class='cls-1' d='M335.63,148.36l-9.2071-19.48a82.9384,82.9384,0,0,1-3.8405-9.927c-.3037,3.354-.8747,7.9123-1.5744,12.1932L318.213,148.36H306.5487l7.3291-45.2013h15.549l8.616,17.89c1.7232,3.6716,3.2675,7.6288,4.5684,11.1013.2353-3.8807,1.05-9.8425,1.7513-14.1274l2.4049-14.8634h11.67L351.1086,148.36Z'/%3E%3Cpath class='cls-1' d='M437.9469,148.3593l-9.5791-17.6844h-.4725l-2.8533,17.6844H412.9073L420.24,103.158c4.4759-.2614,10.1582-.3318,16.46-.3318,12.36,0,19.2065,3.8144,17.6643,13.3875-1.0013,6.0926-6.3921,11.055-13.6207,12.5229,1.1139,1.7493,2.1535,3.4142,3.2232,5.0851l8.7568,14.5376Zm-3.571-36.9633c-1.2406,0-2.6461.07-3.362.1347l-1.878,11.5838c.6072.06,1.8438.1328,3.0121.1328,5.1253,0,8.7708-2.3445,9.3921-6.1589.5711-3.553-1.49-5.6924-7.1642-5.6924'/%3E%3Cpolygon class='cls-1' points='458.977 148.36 466.308 103.159 495.864 103.159 494.442 111.923 477.023 111.923 475.566 120.901 492.052 120.901 490.672 129.411 474.182 129.411 472.572 139.384 489.981 139.384 488.535 148.36 458.977 148.36'/%3E%3Cpath class='cls-1' d='M531.4747,148.36l-1.9122-8.3767H511.4458l-4.5483,8.3767H494.8512l25.0558-45.2013h13.7735L544.78,148.36Zm-5.7989-25.6509a39.25,39.25,0,0,1-1.1924-7.5061h-.1569a62.7354,62.7354,0,0,1-3.7862,8.043l-4.7956,8.4933h12.1268Z'/%3E%3Cpath class='cls-1' d='M578.7776,148.36l-9.2071-19.48a83.4276,83.4276,0,0,1-3.8285-9.927c-.3116,3.354-.8968,7.9123-1.59,12.1932L561.3566,148.36h-11.66l7.3251-45.2013h15.561l8.606,17.89c1.7413,3.6716,3.2654,7.6288,4.5784,11.1013.2393-3.8807,1.0456-9.8425,1.7433-14.1274l2.4169-14.8634h11.6623L594.2522,148.36Z'/%3E%3Cpolygon class='cls-1' points='606.385 148.36 613.728 103.159 625.855 103.159 618.52 148.36 606.385 148.36'/%3E%3Cpath class='cls-1' d='M222.5872,84.6876c-2.7064-7.1723-8.5778-12.9672-16.9746-16.7635-7.9022-3.5791-17.8614-5.2983-28.7877-4.9886a112.434,112.434,0,0,0-65.6,24.7722c-8.4009,6.9934-14.7407,14.8614-18.3037,22.7656-3.8043,8.3988-4.3714,16.6288-1.6569,23.8031,3.9994,10.6126,14.6482,17.9558,29.97,20.6663,15.1469,2.6944,33.1148.5308,50.574-6.0543a108.9828,108.9828,0,0,0,30.8266-17.64c8.4049-6.9813,14.7286-14.8674,18.2937-22.7656a34.9929,34.9929,0,0,0,3.34-14.4049,26.4154,26.4154,0,0,0-1.681-9.39M139.13,146.9962c-2.1938-.6836-2.7125-2.262-.8084-5.5053l9.7642-16.4881h26.8091l2.3385,10.4116a5.06,5.06,0,0,1-1.7976,4.9022c-.6253.2513-1.2427.4907-1.862.7319a88.0339,88.0339,0,0,1-34.4438,5.9477M151.98,118.9284l15.3439-25.3373,6.1066,25.3373Zm44.7067,9.4685a2.3855,2.3855,0,0,1-3.5792-1.4155l-11.435-44.0351s-1.5945-7.7091-8.3466-7.7091h-1.84L161.8892,91.54l-30.76,49.11c-2.0308,3.2111-4.1984,4.1441-6.41,3.9511-9.4424-2.9438-16.482-8.4511-19.4116-16.2106-7.0235-18.5852,12.1569-43.04,42.8326-54.6357,30.6758-11.608,61.247-5.9437,68.2545,12.6456,5.0208,13.2789-3.3318,29.5638-19.7072,41.9961'/%3E%3Cpath class='cls-1' d='M386.4066,103.164c-5.4994-.0362-11.4391.1307-14.6281.2232l-1.5362.0322-7.5825,45.26,4.6931.1749c3.2735.1307,6.6817.2916,11.0811.3178,9.8848.0683,17.97-2.9981,23.3849-8.8593,4.8177-5.1878,7.2608-12.3641,6.8847-20.1677-.5187-10.8459-8.433-16.8842-22.297-16.9807M379.3007,139.5c-.754,0-1.7373-.0583-2.6039-.1367.38-2.3928,4.0154-24.8286,4.2949-26.582,1.2607-.0562,2.8291-.09,4.679-.0784,9.0523.07,10.4618,4.1723,10.6528,8.18.3057,6.4866-2.8492,18.7139-17.0228,18.6174'/%3E%3C/svg%3E">
+    <div class="header-txt">
+      <h1>Seguí tu pedido</h1>
+      <p>Consultá el estado de tu envío</p>
+    </div>
+    <span class="badge-user">Sucursal Buenos Aires</span>
+  </div>
+</header>
+
+<div class="hero">
+  <h2>¿Dónde está mi pedido?</h2>
+  <p>Ingresá tu número de seguimiento para ver el estado del envío.</p>
+  <form class="buscador" id="formBuscar" autocomplete="off">
+    <input type="search" id="q" placeholder="Ej: 360000000000000" aria-label="Número de seguimiento">
+    <button type="submit">Buscar</button>
+  </form>
+  <p class="hint">También podés buscar por teléfono o por tu nombre.</p>
+</div>
+
+<main>
+  <div id="resultado"></div>
+  <p class="pie-info"><span id="fuente">—</span><button type="button" id="btnActualizar">Actualizar</button></p>
+</main>
+
+<footer>
+  <strong>ANDREANI</strong> · Portal de seguimiento
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     PEGÁ ACÁ LA URL DE TU APLICACIÓN WEB (termina en /exec).
+     También podés dejarla vacía si siempre abrís el portal
+     desde el link que genera el panel.
+     ============================================================ */
+  const API_URL = "";
+
+  const CLAVE_API = "andreani_portal_api";
+  const $ = id => document.getElementById(id);
+  let datos = [];
+  let temporizador = null;
+  let api = "";
+
+  const esc = s => String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  const norm = s => String(s == null ? "" : s).toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  const soloDig = s => String(s == null ? "" : s).replace(/\D/g, "");
+
+  function fmtFecha(f){
+    if(!f) return "—";
+    const p = String(f).split("-");
+    return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : f;
+  }
+  function b64dec(str){
+    let s = String(str).replace(/-/g, "+").replace(/_/g, "/");
+    while(s.length % 4) s += "=";
+    const bin = atob(s);
+    return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+  }
+  function normalizar(d){
+    return {
+      cliente: d.cliente || "", telefono: d.telefono || "", producto: d.producto || "",
+      fecha: d.fecha || "", direccion: d.direccion || "", localidad: d.localidad || "",
+      seguimiento: d.seguimiento || "", estado: d.estado || "Pendiente"
+    };
+  }
+
+  function jsonp(url){
+    return new Promise((res, rej) => {
+      const cb = "cb" + Math.random().toString(36).slice(2);
+      const s = document.createElement("script");
+      const limpiar = () => { try{ delete window[cb]; }catch(e){ window[cb] = undefined; } s.remove(); };
+      window[cb] = d => { res(d); limpiar(); };
+      s.src = url + "&prefix=" + cb;
+      s.onerror = () => { rej(new Error("jsonp")); limpiar(); };
+      document.body.appendChild(s);
+      setTimeout(() => { if(window[cb]){ rej(new Error("timeout")); limpiar(); } }, 12000);
+    });
+  }
+
+  async function traerRemoto(){
+    if(!api) return false;
+    let j = null;
+    try{
+      const r = await fetch(api + "?accion=listar");
+      j = await r.json();
+    }catch(e){
+      try{ j = await jsonp(api + "?accion=listar"); }catch(e2){ return false; }
+    }
+    if(!j || !j.ok) return false;
+    datos = (j.pedidos || []).map(normalizar).filter(d => d.cliente || d.seguimiento);
+    return true;
+  }
+
+  function leerLocal(){
+    try{ return JSON.parse(localStorage.getItem("andreani_portal_datos")) || []; }
+    catch(e){ return []; }
+  }
+
+  async function cargar(){
+    $("fuente").textContent = "Actualizando...";
+    const ok = await traerRemoto();
+    if(ok){
+      $("fuente").textContent = "Datos en vivo desde la planilla";
+    }else{
+      datos = leerLocal().map(normalizar);
+      $("fuente").textContent = api ? "Sin conexión · datos guardados" : "Datos locales";
+    }
+  }
+
+  /* ---------- búsqueda ---------- */
+  function buscar(q){
+    const nq = norm(q), dq = soloDig(q);
+    if(!nq && !dq) return [];
+    return datos.filter(d => {
+      if(dq && dq.length >= 3 && soloDig(d.seguimiento).indexOf(dq) > -1) return true;
+      if(dq && dq.length >= 6 && soloDig(d.telefono).indexOf(dq) > -1) return true;
+      if(nq && norm(d.cliente).indexOf(nq) > -1) return true;
+      if(nq && norm(d.seguimiento).indexOf(nq) > -1) return true;
+      return false;
+    });
+  }
+
+  function claseEstado(e){
+    const n = norm(e);
+    if(n.indexOf("entreg") > -1) return "entregado";
+    if(n.indexOf("transit") > -1 || n.indexOf("camino") > -1 || n.indexOf("repart") > -1) return "transito";
+    return "pendiente";
+  }
+  function pasos(estado){
+    const c = claseEstado(estado);
+    const base = [
+      {t:"Pedido registrado", s:"Recibimos los datos del envío."},
+      {t:"En camino", s:"Tu pedido está en tránsito hacia el domicilio."},
+      {t:"Entregado", s:"El pedido fue entregado."}
+    ];
+    return base.map((p, i) => {
+      let st = "pending";
+      if(c === "entregado") st = "done";
+      else if(c === "transito") st = i === 0 ? "done" : (i === 1 ? "current" : "pending");
+      else st = i === 0 ? "current" : "pending";
+      return {t:p.t, s:p.s, st:st};
+    });
+  }
+  function fila(k, v, extra){
+    return '<div class="dato"><span>' + esc(k) + '</span><b>' + esc(v) + (extra || "") + '</b></div>';
+  }
+  function cardHTML(d){
+    const c = claseEstado(d.estado);
+    const entregado = c === "entregado";
+    const demora = !entregado && d.fecha && new Date(d.fecha + "T23:59:59") < new Date();
+    const pasosHtml = pasos(d.estado).map(p =>
+      '<li class="' + p.st + '"><strong>' + esc(p.t) + '</strong><small>' + esc(p.s) + '</small></li>').join("");
+    return '<article class="tarjeta">' +
+      '<div class="tarjeta-head">' +
+        '<div><span class="etq">N.º de seguimiento</span>' +
+        '<strong class="seg">' + esc(d.seguimiento || "Sin número") + '</strong></div>' +
+        '<span class="chip ' + c + '">' + esc(d.estado) + '</span>' +
+      '</div>' +
+      '<ol class="timeline">' + pasosHtml + '</ol>' +
+      '<div class="datos">' +
+        fila("Cliente", d.cliente || "—") +
+        fila("Producto", d.producto || "—") +
+        fila(entregado ? "Entregado el" : "Entrega estimada", fmtFecha(d.fecha),
+             demora ? ' <span class="alerta">Demorado</span>' : "") +
+        fila("Dirección", (d.direccion || "—") + (d.localidad ? ", " + d.localidad : "")) +
+        fila("Teléfono", d.telefono || "—") +
+      '</div></article>';
+  }
+
+  function renderResultado(q){
+    const cont = $("resultado");
+    if(!q){
+      cont.innerHTML = '<div class="caja vacio"><span class="ico">📦</span>' +
+        '<h3>Consultá tu envío</h3><p>Escribí tu número de seguimiento en el buscador de arriba.</p></div>';
+      return;
+    }
+    const lista = buscar(q);
+    if(lista.length === 0){
+      cont.innerHTML = '<div class="caja vacio"><span class="ico">📦</span>' +
+        '<h3>No encontramos ese pedido</h3>' +
+        '<p>Revisá el número de seguimiento o probá con tu teléfono. Si sigue sin aparecer, contactá a la sucursal.</p></div>';
+      return;
+    }
+    cont.innerHTML = lista.map(cardHTML).join("");
+  }
+
+  /* ---------- arranque ---------- */
+  const qs = new URLSearchParams(location.search);
+  const apiParam = qs.get("api");
+  if(apiParam){
+    api = apiParam;
+    localStorage.setItem(CLAVE_API, api);
+  }else{
+    api = localStorage.getItem(CLAVE_API) || API_URL || "";
+  }
+
+  $("formBuscar").addEventListener("submit", ev => {
+    ev.preventDefault();
+    renderResultado($("q").value.trim());
+  });
+  $("q").addEventListener("input", function(){
+    clearTimeout(temporizador);
+    const v = this.value.trim();
+    temporizador = setTimeout(() => renderResultado(v), 250);
+  });
+  $("btnActualizar").addEventListener("click", async () => {
+    await cargar();
+    renderResultado($("q").value.trim());
+  });
+
+  let pre = qs.get("seg") || "";
+  if(!pre && qs.get("d")){
+    try{
+      const o = JSON.parse(b64dec(qs.get("d")));
+      const arr = Array.isArray(o) ? o : [o];
+      datos = arr.map(normalizar).concat(datos);
+      pre = arr[0] && arr[0].seguimiento ? arr[0].seguimiento : "";
+    }catch(e){}
+  }
+
+  (async () => {
+    await cargar();
+    if(pre){ $("q").value = pre; renderResultado(pre); }
+    else renderResultado("");
+    setInterval(async () => {
+      if(document.visibilityState === "visible" && $("q").value.trim()){
+        await cargar();
+        renderResultado($("q").value.trim());
+      }
+    }, 60000);
+  })();
+})();
+</script>
+</body>
+</html>
