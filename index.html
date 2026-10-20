@@ -143,7 +143,7 @@
       const s = document.createElement("script");
       const limpiar = () => { try{ delete window[cb]; }catch(e){ window[cb] = undefined; } s.remove(); };
       window[cb] = d => { res(d); limpiar(); };
-      s.src = url + "&prefix=" + cb;
+      s.src = url + (url.indexOf("?") > -1 ? "&" : "?") + "prefix=" + cb;
       s.onerror = () => { rej(new Error("jsonp")); limpiar(); };
       document.body.appendChild(s);
       setTimeout(() => { if(window[cb]){ rej(new Error("timeout")); limpiar(); } }, 12000);
@@ -152,16 +152,25 @@
 
   async function traerRemoto(){
     if(!api) return false;
-    let j = null;
-    try{
-      const r = await fetch(api + "?accion=listar");
-      j = await r.json();
-    }catch(e){
-      try{ j = await jsonp(api + "?accion=listar"); }catch(e2){ return false; }
+    try {
+      const j = await jsonp(api + "?accion=listar");
+      if(j && j.ok && j.pedidos){
+        datos = j.pedidos.map(normalizar).filter(d => d.cliente || d.seguimiento);
+        try { localStorage.setItem("andreani_portal_datos", JSON.stringify(datos)); } catch(e){}
+        return true;
+      }
+    } catch(e) {
+      try {
+        const r = await fetch(api + "?accion=listar");
+        const j = await r.json();
+        if(j && j.ok && j.pedidos){
+          datos = j.pedidos.map(normalizar).filter(d => d.cliente || d.seguimiento);
+          try { localStorage.setItem("andreani_portal_datos", JSON.stringify(datos)); } catch(e2){}
+          return true;
+        }
+      } catch(e2) {}
     }
-    if(!j || !j.ok) return false;
-    datos = (j.pedidos || []).map(normalizar).filter(d => d.cliente || d.seguimiento);
-    return true;
+    return false;
   }
 
   function leerLocal(){
@@ -203,7 +212,7 @@
     const c = claseEstado(estado);
     const base = [
       {t:"Pedido registrado", s:"Recibimos los datos del envío."},
-      {t:"En camino", s:"Tu pedido está in tránsito hacia el domicilio."},
+      {t:"En camino", s:"Tu pedido está en tránsito hacia el domicilio."},
       {t:"Entregado", s:"El pedido fue entregado."}
     ];
     return base.map((p, i) => {
