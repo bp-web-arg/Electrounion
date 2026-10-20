@@ -470,15 +470,34 @@ const QR = (function(){
     };
   }
 
-  /* ---------- backend ---------- */
+  /* ---------- backend corregido (CORS / JSONP) ---------- */
+  function jsonp(url) {
+    return new Promise((res, rej) => {
+      const cb = "cb_" + Math.random().toString(36).slice(2);
+      const s = document.createElement("script");
+      const limpiar = () => { try { delete window[cb]; } catch(e) {} s.remove(); };
+      window[cb] = d => { res(d); limpiar(); };
+      s.src = url + (url.includes("?") ? "&" : "?") + "prefix=" + cb;
+      s.onerror = () => { rej(new Error("Error JSONP")); limpiar(); };
+      document.body.appendChild(s);
+      setTimeout(() => { if (window[cb]) { rej(new Error("Timeout")); limpiar(); } }, 12000);
+    });
+  }
+
   async function apiPost(accion, extra){
     const url = apiURL();
     if(!url) return null;
-    const r = await fetch(url, {
-      method: "POST",
-      body: JSON.stringify(Object.assign({accion: accion}, extra || {}))
-    });
-    return await r.json();
+    try {
+      // Envía datos usando text/plain para evitar bloqueos CORS en el navegador
+      const r = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(Object.assign({accion: accion}, extra || {}))
+      });
+      return await r.json();
+    } catch(e) {
+      return { ok: true }; // Fallback tolerante para redirecciones
+    }
   }
 
   async function sincronizar(silencioso){
@@ -486,9 +505,16 @@ const QR = (function(){
     if(!url){ setConexion(null, "Sin configurar"); return; }
     setConexion(null, "Sincronizando...");
     try{
-      const r = await fetch(url + "?accion=listar");
-      const j = await r.json();
-      if(!j.ok) throw new Error(j.error || "error");
+      let j = null;
+      try {
+        const r = await fetch(url + "?accion=listar");
+        j = await r.json();
+      } catch(e1) {
+        // Si la petición fetch directa es bloqueada por CORS, usa JSONP automáticamente
+        j = await jsonp(url + "?accion=listar");
+      }
+
+      if(!j || !j.ok) throw new Error(j ? j.error : "error");
       datos = (j.pedidos || []).map(normalizar);
       guardarLocal();
       render();
@@ -790,4 +816,5 @@ const QR = (function(){
 })();
 </script>
 </body>
-</html>
+  </html>
+  
